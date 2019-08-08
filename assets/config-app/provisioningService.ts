@@ -82,6 +82,7 @@ export class ProvisioningService {
     const Authorization = (args.provisioningKey || '').trim()
     const id = args.camera.urn
     const location = args.camera.location
+    const gauge_info = args.camera.gauge_info
     console.log(url)
     return request({
       url,
@@ -89,7 +90,7 @@ export class ProvisioningService {
       headers: {
         Authorization
       },
-      body: JSON.stringify({id, meta:{location}})
+      body: JSON.stringify({id, meta:{location, gauge_info}})
     }).then(result => {
       console.log("Provisioning success in cloud step!")
       console.log(result)

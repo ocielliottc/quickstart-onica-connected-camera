@@ -73,6 +73,7 @@ var ProvisioningService = /** @class */ (function () {
         var Authorization = (args.provisioningKey || '').trim();
         var id = args.camera.urn;
         var location = args.camera.location;
+        var gauge_info = args.camera.gauge_info;
         console.log(url);
         return request({
             url: url,
@@ -80,7 +81,7 @@ var ProvisioningService = /** @class */ (function () {
             headers: {
                 Authorization: Authorization
             },
-            body: JSON.stringify({ id: id, meta: { location: location } })
+            body: JSON.stringify({ id: id, meta: { location: location, gauge_info: gauge_info } })
         }).then(function (result) {
             console.log("Provisioning success in cloud step!");
             console.log(result);

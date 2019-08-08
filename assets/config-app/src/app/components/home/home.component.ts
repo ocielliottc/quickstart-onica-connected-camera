@@ -84,6 +84,9 @@ export class NewCameraErrorStateMatcher implements ErrorStateMatcher {
       case 'location':
         // The location can be empty or anything, really
         return false
+      case 'gauge_info':
+        // The gauge information can be empty or anything, really
+        return false
       default:
         console.log("Unknown newCamera validation field: " + this.field)
         return false
@@ -131,6 +134,7 @@ export class HomeComponent implements OnInit {
     this.newCameraUrnErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'urn')
     this.newCameraNameErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'name')
     this.newCameraLocationErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'location')
+    this.newCameraGaugeInfoErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'gauge_info')
 
     //set list of cameras (depends on newCameraUrnErrorStateMatcher instance)
     this.setCameras([])
@@ -268,13 +272,14 @@ export class HomeComponent implements OnInit {
     this.newCameraUrnErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraNameErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraLocationErrorStateMatcher.setNewCamera(this.newCamera)
+    this.newCameraGaugeInfoErrorStateMatcher.setNewCamera(this.newCamera)
   }
 
   /**
    * Validate and add manually entered camera to the list.
    */
   onSaveNew() {
-    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError() || this.newCameraLocationErrorStateMatcher.fieldHasError()) {
+    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError() || this.newCameraLocationErrorStateMatcher.fieldHasError() || this.newCameraGaugeInfoErrorStateMatcher.fieldHasError()) {
       this.state.showAddingNewCameraError = true
     } else {
       this.newCamera.status = 'UNPAIRED'
@@ -309,6 +314,7 @@ export class HomeComponent implements OnInit {
   newCameraUrnErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraNameErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraLocationErrorStateMatcher: NewCameraErrorStateMatcher;
+  newCameraGaugeInfoErrorStateMatcher: NewCameraErrorStateMatcher;
 
 
 }
