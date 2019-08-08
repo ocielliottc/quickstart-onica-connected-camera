@@ -81,6 +81,7 @@ export class ProvisioningService {
     const url = (args.stackEndpoint || '').trim() + "/provision"
     const Authorization = (args.provisioningKey || '').trim()
     const id = args.camera.urn
+    const location = args.camera.location
     console.log(url)
     return request({
       url,
@@ -88,7 +89,7 @@ export class ProvisioningService {
       headers: {
         Authorization
       },
-      body: JSON.stringify({id})
+      body: JSON.stringify({id, meta:{location}})
     }).then(result => {
       console.log("Provisioning success in cloud step!")
       console.log(result)

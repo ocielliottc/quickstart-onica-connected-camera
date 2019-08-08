@@ -137,9 +137,7 @@
                               "dynamodb:GetItem",
                               "dynamodb:PutItem"
                            ],
-                           "Resource":{
-                              "Fn::GetAtt":"ProvisioningKeyTable.Arn"
-                           },
+                           "Resource":"*",
                            "Effect":"Allow"
                         }
                      ]
@@ -187,14 +185,14 @@
                   }
                },
                {
-                  "PolicyName":"KinesisVideoPolicy",
+                  "PolicyName":"KinesisPolicy",
                   "PolicyDocument":{
                      "Version":"2012-10-17",
                      "Statement":[
                         {
                            "Action":[
-                              "kinesisvideo:DescribeStream",
-                              "kinesisvideo:CreateStream"
+                              "kinesis:DescribeStream",
+                              "kinesis:CreateStream"
                            ],
                            "Resource":"*",
                            "Effect":"Allow"
@@ -352,6 +350,9 @@
                   "ProvisioningKeyTableName":{
                      "Ref":"ProvisioningKeyTable"
                   },
+                  "MetaDataTableName":{
+                     "Ref":"MetaDataTable"
+                  },
                   "AWSRegion":{
                      "Fn::Sub":"${AWS::Region}"
                   },
@@ -435,12 +436,12 @@
                      "Version":"2012-10-17",
                      "Statement":{
                         "Action":[
-                           "kinesisvideo:DescribeStream",
-                           "kinesisvideo:PutMedia",
-                           "kinesisvideo:GetDataEndpoint",
-                           "kinesisvideo:TagStream",
-                           "kinesisvideo:UntagStream",
-                           "kinesisvideo:ListTagsForStream"
+                           "kinesis:DescribeStream",
+                           "kinesis:PutMedia",
+                           "kinesis:GetDataEndpoint",
+                           "kinesis:TagStream",
+                           "kinesis:UntagStream",
+                           "kinesis:ListTagsForStream"
                         ],
                         "Resource":[
                            "*"
@@ -463,6 +464,27 @@
          }
       },
       "ProvisioningKeyTable":{
+         "Type":"AWS::DynamoDB::Table",
+         "Properties":{
+            "ProvisionedThroughput":{
+               "WriteCapacityUnits":1,
+               "ReadCapacityUnits":1
+            },
+            "AttributeDefinitions":[
+               {
+                  "AttributeName":"key",
+                  "AttributeType":"S"
+               }
+            ],
+            "KeySchema":[
+               {
+                  "KeyType":"HASH",
+                  "AttributeName":"key"
+               }
+            ]
+         }
+      },
+      "MetaDataTable":{
          "Type":"AWS::DynamoDB::Table",
          "Properties":{
             "ProvisionedThroughput":{

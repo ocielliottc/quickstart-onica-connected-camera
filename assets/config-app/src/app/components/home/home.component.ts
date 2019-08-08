@@ -81,6 +81,9 @@ export class NewCameraErrorStateMatcher implements ErrorStateMatcher {
         }
       case 'name':
         return this.newCamera.name == null || this.newCamera.name.length == 0
+      case 'location':
+        // The location can be empty or anything, really
+        return false
       default:
         console.log("Unknown newCamera validation field: " + this.field)
         return false
@@ -127,6 +130,7 @@ export class HomeComponent implements OnInit {
     this.newCameraIpErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'ip')
     this.newCameraUrnErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'urn')
     this.newCameraNameErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'name')
+    this.newCameraLocationErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'location')
 
     //set list of cameras (depends on newCameraUrnErrorStateMatcher instance)
     this.setCameras([])
@@ -263,13 +267,14 @@ export class HomeComponent implements OnInit {
     this.newCameraIpErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraUrnErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraNameErrorStateMatcher.setNewCamera(this.newCamera)
+    this.newCameraLocationErrorStateMatcher.setNewCamera(this.newCamera)
   }
 
   /**
    * Validate and add manually entered camera to the list.
    */
   onSaveNew() {
-    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError()) {
+    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError() || this.newCameraLocationErrorStateMatcher.fieldHasError()) {
       this.state.showAddingNewCameraError = true
     } else {
       this.newCamera.status = 'UNPAIRED'
@@ -303,6 +308,7 @@ export class HomeComponent implements OnInit {
   newCameraIpErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraUrnErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraNameErrorStateMatcher: NewCameraErrorStateMatcher;
+  newCameraLocationErrorStateMatcher: NewCameraErrorStateMatcher;
 
 
 }

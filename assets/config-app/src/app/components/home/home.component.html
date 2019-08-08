@@ -40,6 +40,10 @@
         <input matInput [(ngModel)]="newCamera.name" [errorStateMatcher]="newCameraNameErrorStateMatcher" placeholder="Name"/>
         <mat-error>Please enter a camera name</mat-error>
       </mat-form-field>
+      <mat-form-field class="new-camera-form">
+        <input matInput [(ngModel)]="newCamera.location" [errorStateMatcher]="newCameraLocationErrorStateMatcher" placeholder="Location"/>
+        <mat-error>Please enter a camera location</mat-error>
+      </mat-form-field>
       <div class="buttons-container">
         <button mat-stroked-button type="button" color="warn" (click)="onCancelNew()">Cancel</button>
         <button mat-stroked-button type="button" color="primary" (click)="onSaveNew()">Save</button>

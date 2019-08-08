@@ -9,7 +9,7 @@ class ProvisioningService {
   constructor() {
     this._iot = new AWS.Iot()
     this._iam = new AWS.IAM()
-    this._kinesisVideo = new AWS.KinesisVideo()
+    this._kinesisStream = new AWS.Kinesis()
     this._cloudwatch = new AWS.CloudWatch()
   }
 
@@ -25,7 +25,7 @@ class ProvisioningService {
     return authorized
   }
 
-  async provisionThing(id) {
+  async provisionThing(id, metaData) {
     //unique id is the thing name.
     const thingName = id
 
@@ -69,28 +69,31 @@ class ProvisioningService {
 
     //create stream
     const StreamName = thingName
-    let KMSKeyId
     try {
-      const existingStream = await this._kinesisVideo.describeStream({StreamName}).promise()
-      KMSKeyId = existingStream.StreamInfo.KmsKeyId
-      console.log("Kinesis video stream already exists.")
+      const existingStream = await this._kinesisStream.describeStream({StreamName}).promise()
+      console.log("Kinesis data stream already exists.")
     } catch (err) {
       //Ignore ResourceNotFoundException
-      console.log("Creating kinesis video stream.")
-      const kvs = await this._kinesisVideo.createStream({StreamName, MediaType: "video/h264", DataRetentionInHours: 24}).promise()
-      const existingStream = await this._kinesisVideo.describeStream({StreamName}).promise()
-      KMSKeyId = existingStream.StreamInfo.KmsKeyId
+      console.log("Creating kinesis data stream.")
+      const kvs = await this._kinesisStream.createStream({StreamName, ShardCount: "1"}).promise()
+      const existingStream = await this._kinesisStream.describeStream({StreamName}).promise()
     }
 
-    const dataAlarms = await this._cloudwatch.describeAlarms({
-      AlarmNames:[ProvisioningService.streamAlarmName(StreamName)]
-    }).promise()
-    const existingAlarms = dataAlarms.MetricAlarms
+    try {
+      const params = {
+        TableName: process.env.MetaDataTableName,
+        Item: {
+          key: thingName,
+          data: metaData
+        }
+      }
 
-    if (!existingAlarms.length) {
-      //create alarm
-      console.log("Creating cloudwatch alarm for video stream.")
-      await this._cloudwatch.putMetricAlarm(ProvisioningService.streamAlarmParams(StreamName)).promise()
+      const docClient = new AWS.DynamoDB.DocumentClient({convertEmptyValues: true})
+      const result = await docClient.put(params, function(err, data) {
+        if (err) console.log(err, err.stack);
+      }).promise()
+    } catch (err) {
+      console.log("Unable to store the camera meta data")
     }
 
     return {
@@ -103,8 +106,7 @@ class ProvisioningService {
       IoTEndpointUrl,
       IoTCredentialUrl,
       IoTCredentialEndpoint,
-      IoTCredentialRoleAlias,
-      KMSKeyId
+      IoTCredentialRoleAlias
     }
   }
 
@@ -115,7 +117,7 @@ class ProvisioningService {
       OKActions: [process.env.MonitoringTopicArn],
       AlarmActions: [process.env.MonitoringTopicArn],
       MetricName: "PutMedia.IncomingFrames",
-      Namespace: "AWS/KinesisVideo",
+      Namespace: "AWS/KinesisStream",
       Statistic: "Sum",
       Dimensions: [{
         Name: "StreamName",

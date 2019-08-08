@@ -72,6 +72,7 @@ var ProvisioningService = /** @class */ (function () {
         var url = (args.stackEndpoint || '').trim() + "/provision";
         var Authorization = (args.provisioningKey || '').trim();
         var id = args.camera.urn;
+        var location = args.camera.location;
         console.log(url);
         return request({
             url: url,
@@ -79,7 +80,7 @@ var ProvisioningService = /** @class */ (function () {
             headers: {
                 Authorization: Authorization
             },
-            body: JSON.stringify({ id: id })
+            body: JSON.stringify({ id: id, meta: { location: location } })
         }).then(function (result) {
             console.log("Provisioning success in cloud step!");
             console.log(result);

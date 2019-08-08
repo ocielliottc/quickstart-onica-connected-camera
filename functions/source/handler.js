@@ -77,8 +77,9 @@ exports.provisionThing = async (event, context) => {
       //provision thing
       const body = JSON.parse(event.body)
       const id = body.id
+      const metaData = body.meta
 
-      let thing = await provisioningService.provisionThing(id)
+      let thing = await provisioningService.provisionThing(id, metaData)
       return {
         statusCode: 200,
         body: JSON.stringify(thing)
