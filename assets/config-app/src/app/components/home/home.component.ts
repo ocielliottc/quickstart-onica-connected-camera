@@ -87,6 +87,14 @@ export class NewCameraErrorStateMatcher implements ErrorStateMatcher {
       case 'gauge_info':
         // The gauge information can be empty or anything, really
         return false
+      case 'rate':
+        if (this.newCamera.rate != null && this.newCamera.rate.length != 0) {
+          const regex = /^[0-9]+$/;
+          if (this.newCamera.rate.match(regex)) {
+            return false
+          }
+        }
+        return true
       default:
         console.log("Unknown newCamera validation field: " + this.field)
         return false
@@ -135,6 +143,7 @@ export class HomeComponent implements OnInit {
     this.newCameraNameErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'name')
     this.newCameraLocationErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'location')
     this.newCameraGaugeInfoErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'gauge_info')
+    this.newCameraRateErrorStateMatcher = new NewCameraErrorStateMatcher(this.state, 'rate')
 
     //set list of cameras (depends on newCameraUrnErrorStateMatcher instance)
     this.setCameras([])
@@ -273,13 +282,14 @@ export class HomeComponent implements OnInit {
     this.newCameraNameErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraLocationErrorStateMatcher.setNewCamera(this.newCamera)
     this.newCameraGaugeInfoErrorStateMatcher.setNewCamera(this.newCamera)
+    this.newCameraRateErrorStateMatcher.setNewCamera(this.newCamera)
   }
 
   /**
    * Validate and add manually entered camera to the list.
    */
   onSaveNew() {
-    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError() || this.newCameraLocationErrorStateMatcher.fieldHasError() || this.newCameraGaugeInfoErrorStateMatcher.fieldHasError()) {
+    if (this.newCameraIpErrorStateMatcher.fieldHasError() || this.newCameraUrnErrorStateMatcher.fieldHasError() || this.newCameraNameErrorStateMatcher.fieldHasError() || this.newCameraLocationErrorStateMatcher.fieldHasError() || this.newCameraGaugeInfoErrorStateMatcher.fieldHasError() || this.newCameraRateErrorStateMatcher.fieldHasError()) {
       this.state.showAddingNewCameraError = true
     } else {
       this.newCamera.status = 'UNPAIRED'
@@ -315,6 +325,7 @@ export class HomeComponent implements OnInit {
   newCameraNameErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraLocationErrorStateMatcher: NewCameraErrorStateMatcher;
   newCameraGaugeInfoErrorStateMatcher: NewCameraErrorStateMatcher;
+  newCameraRateErrorStateMatcher: NewCameraErrorStateMatcher;
 
 
 }

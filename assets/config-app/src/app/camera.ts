@@ -2,6 +2,7 @@ export class Camera {
   urn: string; //unique id from onvif message urn
   name: string; //name of camera from onvif message name
   ip: string; //ip of camera from onvif message xaddrs
+  rate: string; //rate of capture
   cameraApiScheme: string; //selected provisioning scheme
   cameraApiUsername: string; //support basic auth for camera api
   cameraApiPassword: string; //support basic auth for camera api

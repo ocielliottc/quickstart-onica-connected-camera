@@ -1,8 +1,13 @@
 import { ipcMain } from 'electron';
 //const url = require('url');
 const request = require('request-promise-native')
+const AWS = require('aws-sdk')
+const awsIot = require('aws-iot-device-sdk')
+const path = require('path')
 
 import { DiscoveryService } from './discoveryService';
+
+let sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Provisioning service in main process
@@ -76,13 +81,14 @@ export class ProvisioningService {
   }
 
 
-  provisionCloudStep(event, args) {
+  async provisionCloudStep(event, args) {
     console.log("cloud step")
     const url = (args.stackEndpoint || '').trim() + "/provision"
     const Authorization = (args.provisioningKey || '').trim()
     const id = args.camera.urn
     const location = args.camera.location
     const gauge_info = args.camera.gauge_info
+    const rate = args.camera.rate
     console.log(url)
     return request({
       url,
@@ -90,7 +96,7 @@ export class ProvisioningService {
       headers: {
         Authorization
       },
-      body: JSON.stringify({id, meta:{location, gauge_info}})
+      body: JSON.stringify({id, meta:{location, gauge_info, rate}})
     }).then(result => {
       console.log("Provisioning success in cloud step!")
       console.log(result)
@@ -107,15 +113,21 @@ export class ProvisioningService {
     })
   }
 
-  provisionCameraStep(event, args, thing) {
+  async provisionCameraStep(event, args, thing) {
     console.log("camera step")
 
-    //camera pairing url
-    const url = `${args.camera.cameraApiScheme}://${args.camera.ip}/provisioning/pair`
-    console.log(url)
+    const certPath = path.join(process.env.USERPROFILE || process.env.HOME, 'certs')
+    const cred = new AWS.SharedIniFileCredentials()
+    const client = awsIot.device({
+      host: args.camera.ip,
+      keyPath: path.join(certPath, 'f5e6003197.private.key'),
+      certPath: path.join(certPath, 'f5e6003197.cert.pem'),
+      caPath: path.join(certPath, 'root.ca.pem'),
+      clientId: 'f5e6003197'
+    })
 
     //camera Basic auth
-    let Authorization
+    let Authorization = ''
     if (args.camera.cameraApiUsername.length > 0 || args.camera.cameraApiPassword.length > 0) {
       console.log("Including camera authentication.")
       Authorization = "Basic " + Buffer.from(`${args.camera.cameraApiUsername}:${args.camera.cameraApiPassword}`).toString('base64')
@@ -124,44 +136,23 @@ export class ProvisioningService {
       console.log("Skipping camera authentication.")
     }
 
-    //provisioning docs mistakenly specified 'Authentication' header, so provide both
-    const Authentication = Authorization
-
-    //provide provisioned thing data via camera pairing api
-    return request({
-      url,
-      method: 'put',
-      headers: {
-        Authorization,
-        Authentication
-      },
-      body: JSON.stringify(thing)
-    }).then(result => {
-      console.log("Provisioning success in camera step!")
-      console.log(result)
-
-      //assume PAIRED status after successful api call, and check camera status api.
-      args.camera.status = 'PAIRED'
-      return this.discoveryService.updateCameraStatus({camera: args.camera})
-    }).catch(err => {
-      console.log("Provisioning failure in camera step!")
-      console.log(err)
-      console.log(err.name)
-      console.log(err.statusCode)
-      console.log(err.message)
-      err.step = "camera"
-
-      //if we can't connect, it likely means ip address or camera api scheme (http/https) is incorrect.
-      if (err.name == 'RequestError' && err.status == undefined) {
-        err.message = "Unable to provision camera: unable to connect. Check camera ip address or provisioning api scheme (http/https)."
-      }
-
-      //if we get an auth error, it likely means camera api username/password is incorrect
-      if (err.statusCode == 401 || err.statusCode == 403) {
-        err.message = "Unable to provision camera: received authentication error from camera. Check camera api username/password."
-      }
-
-      throw err
+    var received = false
+    client.on('message', function(topic, payload) {
+      received = true
     })
+
+    const message = JSON.stringify({authorization: Authorization})
+    client.subscribe('deepgauge_model/authorization')
+    client.publish('deepgauge_model/provision', message)
+
+    await sleep(2000);
+
+    if (received) {
+      args.camera.status = 'PAIRED'
+    }
+    else {
+      var err = { step: "camera", message: "Did not receive authorization" }
+      throw err
+    }
   }
 }
